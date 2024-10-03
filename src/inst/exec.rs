@@ -34,6 +34,7 @@ impl Executor {
     pub fn run(&mut self) -> Result<(), InstallerError> {
         let disk_manifest = self.populate_disk_manifest();
 
+        self.check_existing_manifest()?;
         self.persist_disk_manifest(&disk_manifest)
             .inst_context("failed to persist disk manifest")?;
         self.copy_files()?;
@@ -82,6 +83,14 @@ impl Executor {
         disk_manifest
     }
 
+    fn check_existing_manifest(&self) -> Result<(), InstallerError> {
+        if self.plan.manifest_path.exists() {
+            Err(InstallerErrorKind::AlreadyInstalled.into())
+        } else {
+            Ok(())
+        }
+    }
+
     fn persist_disk_manifest(&self, disk_manifest: &DiskManifest) -> Result<(), InstallerError> {
         tracing::debug!("persist disk manifest");
 
@@ -95,14 +104,7 @@ impl Executor {
             manifest_temp_file.path(),
             &manifest_checksum,
             &self.plan.manifest_path,
-        )
-        .map_err(|error| {
-            if matches!(error.kind(), InstallerErrorKind::UnknownFileInDestination) {
-                InstallerError::new(InstallerErrorKind::AlreadyInstalled).with_source(error)
-            } else {
-                error
-            }
-        })?;
+        )?;
         #[cfg(unix)]
         {
             use crate::error::AddContext;
@@ -203,7 +205,7 @@ impl Executor {
 
         #[cfg(unix)]
         if let Some(part) = &self.plan.search_path {
-            let profile = crate::os::unix::get_curent_shell_profile()?;
+            let profile = crate::os::unix::get_current_shell_profile()?;
             tracing::info!(?part, ?profile, "modifying PATH environment variable");
             crate::os::unix::add_path_env_var(self.plan.access_scope, &part, &profile)?;
         }
@@ -254,6 +256,10 @@ impl Executor {
                     &config,
                 )?;
             }
+        }
+        #[cfg(unix)]
+        {
+            let _ = self.plan.main_executable();
         }
 
         Ok(())

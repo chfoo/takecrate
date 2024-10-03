@@ -52,24 +52,31 @@ impl Installer {
     pub fn new(package_manifest: &PackageManifest) -> Self {
         Self {
             package_manifest: package_manifest.clone(),
-            tui: Rc::new(RefCell::new(Tui::new(
-                package_manifest
-                    .app_metadata
-                    .get_display_name(&crate::locale::current_lang_tag()),
-                &package_manifest.app_metadata.display_version,
-            ))),
+            tui: Rc::new(RefCell::new(Tui::new())),
         }
     }
 
     /// Install with a TUI.
     pub fn run_interactive(&mut self) -> Result<(), InstallerError> {
+        self.tui.borrow_mut().set_name(
+            self.package_manifest
+                .app_metadata
+                .get_display_name(&crate::locale::current_lang_tag()),
+            &self.package_manifest.app_metadata.display_version,
+        );
         self.tui.borrow_mut().run_background();
 
         let result = self.run_interactive_impl();
 
         if let Err(error) = &result {
-            if !matches!(error.kind(), InstallerErrorKind::InterruptedByUser) {
-                self.tui.borrow_mut().show_error(error)?;
+            match error.kind() {
+                InstallerErrorKind::AlreadyInstalled => {
+                    self.tui.borrow_mut().show_unneeded_install(false)?;
+                }
+                InstallerErrorKind::InterruptedByUser => {
+                    self.tui.borrow_mut().show_error(error)?;
+                }
+                _ => {}
             }
         }
 

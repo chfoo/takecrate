@@ -13,6 +13,7 @@ use crate::{
 pub struct Uninstaller {
     app_id: AppId,
     manifest: DiskManifest,
+    manual_manifest: Option<DiskManifest>,
     tui: Rc<RefCell<Tui>>,
 }
 
@@ -22,15 +23,19 @@ impl Uninstaller {
     /// `app_id` is the application ID of the current binary.
     ///
     /// `manifest` is the disk manifest found on the machine.
-    pub fn new(app_id: &AppId, manifest: DiskManifest) -> Self {
+    pub fn new(app_id: &AppId) -> Self {
         Self {
             app_id: app_id.clone(),
-            tui: Rc::new(RefCell::new(Tui::new(
-                &manifest.app_name,
-                &manifest.app_version,
-            ))),
-            manifest,
+            tui: Rc::new(RefCell::new(Tui::new())),
+            manifest: Default::default(),
+            manual_manifest: None,
         }
+    }
+
+    /// Manually specify a disk manifest instead of discovering it.
+    pub fn with_manifest(mut self, manifest: &DiskManifest) -> Self {
+        self.manual_manifest = Some(manifest.clone());
+        self
     }
 
     /// Uninstall with a TUI.
@@ -40,8 +45,14 @@ impl Uninstaller {
         let result = self.run_interactive_impl();
 
         if let Err(error) = &result {
-            if !matches!(error.kind(), InstallerErrorKind::InterruptedByUser) {
-                self.tui.borrow_mut().show_error(error)?;
+            match error.kind() {
+                InstallerErrorKind::NotInstalled => {
+                    self.tui.borrow_mut().show_unneeded_install(true)?;
+                }
+                InstallerErrorKind::InterruptedByUser => {
+                    self.tui.borrow_mut().show_error(error)?;
+                }
+                _ => {}
             }
         }
 
@@ -51,7 +62,10 @@ impl Uninstaller {
     }
 
     fn run_interactive_impl(&mut self) -> Result<(), InstallerError> {
-        let tui = self.tui.borrow_mut();
+        self.discover_manifest()?;
+
+        let mut tui = self.tui.borrow_mut();
+        tui.set_name(&self.manifest.app_name, &self.manifest.app_version);
 
         tui.uninstallation_intro()?;
         tui.show_uninstall_progress_dialog()?;
@@ -69,6 +83,7 @@ impl Uninstaller {
 
     /// Automatically uninstall the binary.
     pub fn run(&mut self) -> Result<(), InstallerError> {
+        self.discover_manifest()?;
         self.run_impl()
     }
 
@@ -86,6 +101,18 @@ impl Uninstaller {
         self.remove_dirs()?;
         self.remove_uninstall_entry()
             .inst_context("failed to remove uninstall entry")?;
+
+        Ok(())
+    }
+
+    fn discover_manifest(&mut self) -> Result<(), InstallerError> {
+        if let Some(manifest) = self.manual_manifest.take() {
+            self.manifest = manifest;
+        } else {
+            self.manifest = crate::manifest(&self.app_id).map_err(|error| {
+                InstallerError::new(InstallerErrorKind::NotInstalled).with_source(error)
+            })?;
+        }
 
         Ok(())
     }
@@ -123,10 +150,14 @@ impl Uninstaller {
         #[cfg(unix)]
         {
             if let Some(exe_dir) = &self.manifest.search_path {
-                let profile = crate::os::unix::get_curent_shell_profile()?;
+                let profile = crate::os::unix::get_current_shell_profile()?;
                 tracing::info!(?exe_dir, ?profile, "remove PATH environment variable");
 
-                crate::os::unix::remove_path_env_var(self.manifest.access_scope, exe_dir, &profile)?;
+                crate::os::unix::remove_path_env_var(
+                    self.manifest.access_scope,
+                    exe_dir,
+                    &profile,
+                )?;
             }
         }
         Ok(())

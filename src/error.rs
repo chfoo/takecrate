@@ -134,8 +134,6 @@ pub enum InstallerErrorKind {
     InvalidPackageManifest,
 
     /// Could not locate the [`crate::manifest::DiskManifest`]
-    ///
-    /// The binary may not be installed or it was not properly installed.
     #[error("disk manifest not found")]
     DiskManifestNotFound,
 
@@ -163,11 +161,17 @@ pub enum InstallerErrorKind {
     #[error("console/terminal error")]
     Terminal,
 
-    /// Indicates the application is (likely) installed.
+    /// Indicates an installation attempt when the application is (likely) already installed.
     ///
-    /// It may return a false positive when the install/uninstall failed.
+    /// It may return a false positive on a prior failed install/uninstall.
     #[error("application is already installed")]
     AlreadyInstalled,
+
+    /// Indicates an uninstallation attempt when the application is (likely) not installed.
+    ///
+    /// It may return a false positive on a prior failed install/uninstall.
+    #[error("application is not installed")]
+    NotInstalled,
 
     /// Indicates a guided interactive session was aborted by the user.
     #[error("interrupted by user")]

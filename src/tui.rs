@@ -29,17 +29,22 @@ pub struct Tui {
 }
 
 impl Tui {
-    pub fn new(app_name: &str, app_version: &str) -> Self {
+    pub fn new() -> Self {
         Self {
             channel: None,
             handle: None,
-            app_name: app_name.to_string(),
-            app_version: app_version.to_string(),
+            app_name: String::new(),
+            app_version: String::new(),
         }
     }
 
     pub fn is_running(&self) -> bool {
         self.channel.is_some()
+    }
+
+    pub fn set_name(&mut self, app_name: &str, app_version: &str) {
+        self.app_name = app_name.to_string();
+        self.app_version = app_version.to_string();
     }
 
     pub fn run_background(&mut self) {
@@ -94,29 +99,44 @@ impl Tui {
         })
     }
 
+    pub fn show_unneeded_install(&self, is_uninstall: bool) -> Result<(), InstallerError> {
+        let title = crate::locale::text("error-occurred");
+        let text = if is_uninstall {
+            crate::locale::text("app-not-installed")
+        } else {
+            crate::locale::text("app-already-installed")
+        };
+
+        self.callback(move |cursive, sender| {
+            let dialog = make_info_dialog(&title, sender).content(TextView::new(text).scrollable());
+
+            cursive.add_layer(dialog);
+        })
+    }
+
     pub fn installation_intro(&self) -> Result<GuidedDialogButton<()>, InstallerError> {
+        let title = crate::locale::text("installer-title");
         let args = [
             ("app_name", (&self.app_name).into()),
             ("app_version", (&self.app_version).into()),
         ];
         let text = crate::locale::text_args("installer-intro", args);
 
-        self.callback(|cursive, sender| {
-            let dialog =
-                make_guided_dialog(&crate::locale::text("installer-title"), sender, |_| ())
-                    .content(TextView::new(text).scrollable());
+        self.callback(move |cursive, sender| {
+            let dialog = make_guided_dialog(&title, sender, |_| ())
+                .content(TextView::new(text).scrollable());
 
             cursive.add_layer(dialog);
         })
     }
 
     pub fn installation_conclusion(&self) -> Result<(), InstallerError> {
+        let title = crate::locale::text("installer-title");
         let args = [("app_name", (&self.app_name).into())];
         let text = crate::locale::text_args("installer-conclusion", args);
 
-        self.callback(|cursive, sender| {
-            let dialog = make_info_dialog(&crate::locale::text("installer-title"), sender)
-                .content(TextView::new(text).scrollable());
+        self.callback(move |cursive, sender| {
+            let dialog = make_info_dialog(&title, sender).content(TextView::new(text).scrollable());
 
             cursive.add_layer(dialog);
         })
@@ -124,6 +144,7 @@ impl Tui {
 
     pub fn prompt_access_scope(&self) -> Result<GuidedDialogButton<AccessScope>, InstallerError> {
         self.callback(|cursive, sender| {
+            let title = crate::locale::text("installer-title");
             let mut layout = LinearLayout::vertical();
             layout.add_child(TextView::new(crate::locale::text("access-scope-prompt")));
 
@@ -135,11 +156,10 @@ impl Tui {
                 radio_group.button(AccessScope::System, crate::locale::text("for-all-users")),
             );
 
-            let dialog =
-                make_guided_dialog(&crate::locale::text("installer-title"), sender, move |_| {
-                    Arc::unwrap_or_clone(radio_group.selection())
-                })
-                .content(layout.scrollable());
+            let dialog = make_guided_dialog(&title, sender, move |_| {
+                Arc::unwrap_or_clone(radio_group.selection())
+            })
+            .content(layout.scrollable());
 
             cursive.add_layer(dialog);
         })
@@ -147,6 +167,7 @@ impl Tui {
 
     pub fn prompt_modify_search_path(&self) -> Result<GuidedDialogButton<bool>, InstallerError> {
         self.callback(|cursive, sender| {
+            let title = crate::locale::text("installer-title");
             let mut layout = LinearLayout::vertical();
             layout.add_child(TextView::new(crate::locale::text(
                 "modify-search-path-prompt",
@@ -158,11 +179,10 @@ impl Tui {
                 radio_group.button(false, crate::locale::text("do-not-modify-search-path")),
             );
 
-            let dialog =
-                make_guided_dialog(&crate::locale::text("installer-title"), sender, move |_| {
-                    Arc::unwrap_or_clone(radio_group.selection())
-                })
-                .content(layout.scrollable());
+            let dialog = make_guided_dialog(&title, sender, move |_| {
+                Arc::unwrap_or_clone(radio_group.selection())
+            })
+            .content(layout.scrollable());
 
             cursive.add_layer(dialog);
         })
@@ -170,9 +190,9 @@ impl Tui {
 
     pub fn prompt_install_confirm(&self) -> Result<GuidedDialogButton<()>, InstallerError> {
         self.callback(|cursive, sender| {
-            let dialog =
-                make_guided_dialog(&crate::locale::text("installer-title"), sender, move |_| ())
-                    .content(TextView::new(crate::locale::text("installer-confirm")).scrollable());
+            let title = crate::locale::text("installer-title");
+            let dialog = make_guided_dialog(&title, sender, move |_| ())
+                .content(TextView::new(crate::locale::text("installer-confirm")).scrollable());
 
             cursive.add_layer(dialog);
         })

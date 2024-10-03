@@ -121,7 +121,7 @@ impl Planner {
 
             #[cfg(unix)]
             {
-                plan.shell_profile_path = Some(crate::os::unix::get_curent_shell_profile()?);
+                plan.shell_profile_path = Some(crate::os::unix::get_current_shell_profile()?);
             }
         }
 

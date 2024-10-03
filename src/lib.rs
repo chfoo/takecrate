@@ -88,8 +88,7 @@ pub fn install(manifest: &PackageManifest, config: &InstallConfig) -> Result<(),
 /// If there is both a User and System installation, the uninstaller will
 /// uninstall the User version.
 pub fn uninstall_interactive(app_id: &AppId) -> Result<(), InstallerError> {
-    let manifest = manifest(app_id)?;
-    let mut uninstaller = Uninstaller::new(app_id, manifest);
+    let mut uninstaller = Uninstaller::new(app_id);
     uninstaller.run_interactive()
 }
 
@@ -101,8 +100,7 @@ pub fn uninstall_interactive(app_id: &AppId) -> Result<(), InstallerError> {
 /// If there is both a User and System installation, the uninstaller will
 /// uninstall the User version.
 pub fn uninstall(app_id: &AppId) -> Result<(), InstallerError> {
-    let manifest = manifest(app_id)?;
-    let mut uninstaller = Uninstaller::new(app_id, manifest);
+    let mut uninstaller = Uninstaller::new(app_id);
     uninstaller.run()
 }
 

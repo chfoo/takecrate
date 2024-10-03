@@ -25,7 +25,7 @@ pub enum OsError {
     Io(#[from] std::io::Error),
 
     /// Error type provided by the Windows crates by Microsoft.
-    #[cfg(any(windows, doc))]
+    #[cfg(windows)]
     #[error(transparent)]
     Windows(#[from] windows_result::Error),
 

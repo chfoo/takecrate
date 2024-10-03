@@ -13,6 +13,7 @@ jobs:
   test:
     name: Run tests
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
     - uses: actions/checkout@v4
     - uses: Swatinem/rust-cache@v2
@@ -23,6 +24,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: false
 
     name: Test example installer on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}

@@ -16,11 +16,15 @@ use crate::manifest::FileType;
 use super::{AccessScope, OsError};
 
 pub fn get_umask() -> u32 {
-    static UMASK: LazyLock<u32> = LazyLock::new(|| unsafe {
-        // SAFETY: we're only getting and setting integers.
-        let current = libc::umask(0o022);
-        libc::umask(current);
-        current
+    static UMASK: LazyLock<u32> = LazyLock::new(|| {
+        let value = unsafe {
+            // SAFETY: we're only getting and setting integers.
+            let current = libc::umask(0o022);
+            libc::umask(current);
+            current
+        };
+        // Cast used because it might be u16 on macOS.
+        value as u32
     });
 
     *UMASK
@@ -42,11 +46,11 @@ pub fn set_posix_permission(target: &Path, mode: u32) -> std::io::Result<()> {
 }
 
 const PROFILE_SHELL_TEMPLATE_SNIPPET: &str = r#"
-## <io.crates.crates.takecrate> Automatically inserted snippet
+## <io.crates.takecrate> Automatically inserted snippet
 if [ -d "{path}" ] ; then
     PATH="{path}:$PATH"
 fi
-## </io.crates.crates.takecrate>
+## </io.crates.takecrate>
 "#;
 
 pub fn add_path_env_var(
@@ -131,23 +135,36 @@ pub fn get_home() -> Result<PathBuf, OsError> {
     Ok(PathBuf::from(home))
 }
 
-pub fn get_curent_shell_profile() -> Result<PathBuf, OsError> {
+pub fn get_current_shell_profile() -> Result<PathBuf, OsError> {
     let home = get_home()?;
+    let zsh_profile = home.join(".zprofile");
+    let bash_profile = home.join(".bash_profile");
+    let default_profile = home.join(".profile");
 
-    if std::env::consts::OS == "macos" {
-        let shell_path = std::env::var("SHELL").unwrap_or_default();
-        let shell_path = PathBuf::from(shell_path);
+    let shell_path = std::env::var("SHELL").unwrap_or_default();
+    let shell_path = PathBuf::from(shell_path);
 
-        if let Some(filename) = shell_path.file_name() {
-            if filename == "zsh" {
-                return Ok(home.join(".zprofile"));
-            } else if filename == "bash" {
-                return Ok(home.join(".bash_profile"));
-            }
+    if let Some(shell_name) = shell_path.file_name() {
+        let shell_name = shell_name.to_str().unwrap_or_default();
+
+        match shell_name {
+            "zsh" if zsh_profile.exists() => return Ok(zsh_profile),
+            "bash" if bash_profile.exists() => return Ok(bash_profile),
+            _ => {}
+        }
+
+        if default_profile.exists() {
+            return Ok(default_profile);
+        }
+
+        match shell_name {
+            "zsh" => return Ok(zsh_profile),
+            "bash" => return Ok(bash_profile),
+            _ => {}
         }
     }
 
-    Ok(home.join(".profile"))
+    Ok(default_profile)
 }
 
 fn verify_safe_for_shell_script(path_str: &str) -> Result<(), OsError> {
