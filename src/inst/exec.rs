@@ -2,7 +2,7 @@ use std::{io::Write, path::Path};
 
 use crate::{
     error::{AddInstallerContext, InstallerError, InstallerErrorKind},
-    manifest::{AppId, DiskDirEntry, DiskFileEntry, DiskManifest},
+    manifest::{AppId, DiskDirEntry, DiskFileEntry, DiskManifest, DiskPaths, FileType},
     os::FileChecksum,
 };
 
@@ -55,7 +55,10 @@ impl Executor {
             app_name: self.plan.display_name.clone(),
             app_version: self.plan.display_version.clone(),
             access_scope: self.plan.access_scope,
-            app_path_prefix: self.plan.destination.clone(),
+            app_paths: DiskPaths {
+                prefix: self.plan.destination.clone(),
+                ..Default::default()
+            },
             dirs: Default::default(),
             files: Default::default(),
             search_path: self.plan.search_path.clone(),
@@ -68,6 +71,17 @@ impl Executor {
                 path: entry.destination_path.clone(),
                 preserve: entry.preserve,
             });
+
+            if let Some(file_type) = entry.content_file_type {
+                let path = entry.destination_path.clone();
+                match file_type {
+                    FileType::Executable => disk_manifest.app_paths.executable = path,
+                    FileType::Library => disk_manifest.app_paths.library = path,
+                    FileType::Configuration => disk_manifest.app_paths.configuration = path,
+                    FileType::Documentation => disk_manifest.app_paths.documentation = path,
+                    FileType::Data => disk_manifest.app_paths.data = path,
+                }
+            }
         }
 
         for entry in &self.plan.files {
@@ -108,8 +122,7 @@ impl Executor {
         #[cfg(unix)]
         {
             use crate::error::AddContext;
-            let mode =
-                crate::os::unix::get_effective_posix_permission(crate::manifest::FileType::Data);
+            let mode = crate::os::unix::get_effective_posix_permission(FileType::Data);
             crate::os::unix::set_posix_permission(&self.plan.manifest_path, mode)
                 .with_context("failed to set disk manifest file permissions")?;
         }
@@ -200,14 +213,14 @@ impl Executor {
         #[cfg(windows)]
         if let Some(part) = &self.plan.search_path {
             tracing::info!(?part, "modifying Path environment variable");
-            crate::os::windows::add_path_env_var(self.plan.access_scope, part)?;
+            crate::os::windows::add_path_env_var(self.plan.access_scope, part.as_os_str())?;
         }
 
         #[cfg(unix)]
         if let Some(part) = &self.plan.search_path {
             let profile = crate::os::unix::get_current_shell_profile()?;
             tracing::info!(?part, ?profile, "modifying PATH environment variable");
-            crate::os::unix::add_path_env_var(self.plan.access_scope, &part, &profile)?;
+            crate::os::unix::add_path_env_var(self.plan.access_scope, part.as_os_str(), &profile)?;
         }
         Ok(())
     }

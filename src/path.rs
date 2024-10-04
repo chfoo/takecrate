@@ -37,7 +37,7 @@ use crate::{
 // For notes on OS specific paths, please see the submodules of the
 // `crate::os` module
 
-/// Specifies where the files are installed on the machine.
+/// Specifies abstractly where the files are installed on the machine.
 ///
 /// See also [`AccessScope`].
 #[derive(Debug, Clone, Serialize, Deserialize)]

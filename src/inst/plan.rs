@@ -1,4 +1,7 @@
-use std::{ffi::OsString, path::PathBuf};
+use std::path::PathBuf;
+
+#[cfg(windows)]
+use std::ffi::OsString;
 
 use crate::{
     error::{AddContext, InstallerError},
@@ -18,7 +21,7 @@ pub struct InstallPlan {
     pub destination: AppPathPrefix,
     pub dirs: Vec<PlanDirEntry>,
     pub files: Vec<PlanFileEntry>,
-    pub search_path: Option<OsString>,
+    pub search_path: Option<PathBuf>,
     #[cfg(windows)]
     pub app_path: Option<PlanAppPath>,
     #[cfg(unix)]
@@ -50,6 +53,7 @@ pub struct PlanAppPath {
 pub struct PlanDirEntry {
     pub destination_path: PathBuf,
     pub preserve: bool,
+    pub content_file_type: Option<FileType>,
 }
 
 #[derive(Debug, Clone)]
@@ -117,7 +121,7 @@ impl Planner {
         let dest_data_dir = path_resolver.data_dir();
 
         if self.config.modify_os_search_path {
-            plan.search_path = Some(dest_bin_dir.as_os_str().to_os_string());
+            plan.search_path = Some(dest_bin_dir.clone());
 
             #[cfg(unix)]
             {
@@ -128,11 +132,13 @@ impl Planner {
         plan.dirs.push(PlanDirEntry {
             destination_path: dest_bin_dir.clone(),
             preserve: dest_bin_dir.exists(),
+            content_file_type: Some(FileType::Executable),
         });
 
         plan.dirs.push(PlanDirEntry {
             destination_path: dest_data_dir.clone(),
             preserve: dest_data_dir.exists(),
+            content_file_type: Some(FileType::Data),
         });
 
         for entry in &self.package_manifest.files {

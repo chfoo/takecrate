@@ -32,6 +32,6 @@ jobs:
     - uses: actions/checkout@v4
     - uses: Swatinem/rust-cache@v2
     - name: Run example install
-      run: cargo run --example takecrate_example_installer -- self install --quiet
+      run: cargo xtask run-example-installer -p="self install --quiet"
     - name: Run example uninstall
-      run: cargo run --example takecrate_example_installer -- self uninstall --quiet
+      run: cargo xtask run-example-installer -p="self uninstall --quiet"

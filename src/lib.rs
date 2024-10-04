@@ -46,7 +46,6 @@
 use error::InstallerError;
 use inst::{InstallConfig, Installer, PackageManifest};
 use manifest::{AppId, DiskManifest};
-use path::PathResolver;
 use uninst::Uninstaller;
 
 pub mod error;
@@ -111,17 +110,4 @@ pub fn uninstall(app_id: &AppId) -> Result<(), InstallerError> {
 pub fn manifest(app_id: &AppId) -> Result<DiskManifest, InstallerError> {
     let exe_path = std::env::current_exe()?;
     crate::manifest::discover_manifest(&exe_path, app_id)
-}
-
-/// Returns the path resolver suitable for ths binary.
-///
-/// Use this path resolver when you need to access data files installed along
-/// with the binary.
-///
-/// If there is both a User and System installation, the User version will
-/// be returned.
-pub fn path_resolver(app_id: &AppId) -> Result<PathResolver, InstallerError> {
-    let manifest = manifest(app_id)?;
-    let resolver = PathResolver::new(app_id.plain_id(), &manifest.app_path_prefix)?;
-    Ok(resolver)
 }

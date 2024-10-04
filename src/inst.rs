@@ -73,10 +73,10 @@ impl Installer {
                 InstallerErrorKind::AlreadyInstalled => {
                     self.tui.borrow_mut().show_unneeded_install(false)?;
                 }
-                InstallerErrorKind::InterruptedByUser => {
+                InstallerErrorKind::InterruptedByUser => {}
+                _ => {
                     self.tui.borrow_mut().show_error(error)?;
                 }
-                _ => {}
             }
         }
 

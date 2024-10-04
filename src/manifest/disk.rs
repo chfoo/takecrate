@@ -1,5 +1,4 @@
 use std::{
-    ffi::OsString,
     fs::File,
     io::{Cursor, Read, Write},
     path::{Path, PathBuf},
@@ -77,6 +76,7 @@ pub struct DiskDirEntry {
 ///
 /// For the installer counterpart, see [`PackageManifest`](crate::inst::PackageManifest).
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct DiskManifest {
     #[serde(skip)]
     /// Path of manifest installed on disk.
@@ -91,14 +91,14 @@ pub struct DiskManifest {
     pub app_version: String,
     /// Access scope.
     pub access_scope: AccessScope,
-    /// Installed application path type.
-    pub app_path_prefix: AppPathPrefix,
+    /// Directory paths for the installed files.
+    pub app_paths: DiskPaths,
     /// Directory entries.
     pub dirs: Vec<DiskDirEntry>,
     /// File entries.
     pub files: Vec<DiskFileEntry>,
     /// If specified, the search path (PATH) installed.
-    pub search_path: Option<OsString>,
+    pub search_path: Option<PathBuf>,
     /// The filename used for the App Paths entry.
     #[cfg(any(windows, doc))]
     pub app_path_exe_name: Option<String>,
@@ -151,4 +151,27 @@ impl DiskManifest {
     pub fn total_file_size(&self) -> u64 {
         self.files.iter().map(|entry| entry.len).sum()
     }
+}
+
+/// Information about the application's location on disk.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct DiskPaths {
+    /// The location specified during installation.
+    pub prefix: AppPathPrefix,
+
+    /// Directory where the application's [`FileType::Executable`] files are installed.
+    pub executable: PathBuf,
+
+    /// Reserved
+    pub library: PathBuf,
+
+    /// Reserved
+    pub configuration: PathBuf,
+
+    /// Reserved
+    pub documentation: PathBuf,
+
+    /// Directory where the application's [`FileType::Data`] files are installed.
+    pub data: PathBuf,
 }

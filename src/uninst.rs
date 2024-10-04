@@ -49,10 +49,10 @@ impl Uninstaller {
                 InstallerErrorKind::NotInstalled => {
                     self.tui.borrow_mut().show_unneeded_install(true)?;
                 }
-                InstallerErrorKind::InterruptedByUser => {
+                InstallerErrorKind::InterruptedByUser => {}
+                _ => {
                     self.tui.borrow_mut().show_error(error)?;
                 }
-                _ => {}
             }
         }
 
@@ -110,7 +110,11 @@ impl Uninstaller {
             self.manifest = manifest;
         } else {
             self.manifest = crate::manifest(&self.app_id).map_err(|error| {
-                InstallerError::new(InstallerErrorKind::NotInstalled).with_source(error)
+                if matches!(error.kind(), InstallerErrorKind::DiskManifestNotFound) {
+                    InstallerError::new(InstallerErrorKind::NotInstalled).with_source(error)
+                } else {
+                    error
+                }
             })?;
         }
 
@@ -144,7 +148,10 @@ impl Uninstaller {
             if let Some(exe_dir) = &self.manifest.search_path {
                 tracing::info!(?exe_dir, "remove PATH environment variable");
 
-                crate::os::windows::remove_path_env_var(self.manifest.access_scope, exe_dir)?;
+                crate::os::windows::remove_path_env_var(
+                    self.manifest.access_scope,
+                    exe_dir.as_os_str(),
+                )?;
             }
         }
         #[cfg(unix)]
@@ -155,7 +162,7 @@ impl Uninstaller {
 
                 crate::os::unix::remove_path_env_var(
                     self.manifest.access_scope,
-                    exe_dir,
+                    exe_dir.as_os_str(),
                     &profile,
                 )?;
             }
@@ -248,18 +255,22 @@ impl Uninstaller {
             .iter()
             .find(|entry| entry.is_main_executable)
         {
-            let checksum = crate::os::file_checksum(&entry.path)?;
+            if entry.path.exists() {
+                let checksum = crate::os::file_checksum(&entry.path)?;
 
-            if checksum.crc32c != entry.crc32c {
-                tracing::warn!(path = ?entry.path, "cannot remove file: is modified");
-                return Ok(());
+                if checksum.crc32c != entry.crc32c {
+                    tracing::warn!(path = ?entry.path, "cannot remove file: is modified");
+                    return Ok(());
+                }
+
+                tracing::info!(path = ?&entry.path, "removing self executable");
+
+                self_replace::self_delete_at(&entry.path)?;
+            } else {
+                tracing::warn!(path = ?&entry.path, "self executable not found");
             }
-
-            tracing::info!(path = ?&entry.path, "removing self executable");
-
-            self_replace::self_delete_at(&entry.path)?;
         } else {
-            tracing::warn!("self executable not found");
+            tracing::warn!("manifest has no self executable");
         }
 
         Ok(())

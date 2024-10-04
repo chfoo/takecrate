@@ -41,8 +41,8 @@ fn main2() -> anyhow::Result<()> {
         Command::Hello => {
             println!("Hello world!");
 
-            let path_resolver = takecrate::path_resolver(&manifest.app_id)?;
-            let content = std::fs::read_to_string(path_resolver.data_dir().join("test.txt"))?;
+            let manifest = takecrate::manifest(&manifest.app_id)?;
+            let content = std::fs::read_to_string(manifest.app_paths.data.join("test.txt"))?;
             println!("test.txt: {}", content);
         }
         Command::Self_(self_args) => match self_args.command {
