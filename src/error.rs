@@ -133,21 +133,21 @@ pub enum InstallerErrorKind {
     #[error("invalid package manifest")]
     InvalidPackageManifest,
 
-    /// Could not locate the [`crate::manifest::DiskManifest`]
+    /// Could not locate the [`DiskManifest`](crate::manifest::DiskManifest)
     #[error("disk manifest not found")]
     DiskManifestNotFound,
 
-    /// [`crate::manifest::DiskManifest`] could not be parsed.
+    /// [`DiskManifest`](crate::manifest::DiskManifest) could not be parsed.
     ///
     /// It may be tampered, corrupted, or an incompatible version.
     #[error("malformed disk manifest")]
     MalformedDiskManifest,
 
-    /// [`crate::manifest::DiskManifest`] has an invalid value.
+    /// [`DiskManifest`](crate::manifest::DiskManifest) has an invalid value.
     #[error("invalid disk manifest")]
     InvalidDiskManifest,
 
-    /// The [`crate::manifest::DiskManifest`] installed does not match this binary.
+    /// The [`DiskManifest`](crate::manifest::DiskManifest) installed does not match this binary.
     ///
     /// The given application ID needs to match to the one installed.
     #[error("mismatched disk manifest")]
@@ -190,7 +190,7 @@ impl InstallerErrorKind {
 }
 
 /// Modify `Result<T, InstallerError>` with context.
-pub trait AddInstallerContext<T> {
+pub(crate) trait AddInstallerContext<T> {
     /// Add context using the given string when Err.
     fn inst_context<C>(self, context: C) -> Result<T, InstallerError>
     where
@@ -225,7 +225,7 @@ impl<T> AddInstallerContext<T> for Result<T, InstallerError> {
 /// This isn't a real error, but allows injecting context in the error stack.
 #[derive(Debug, thiserror::Error)]
 #[error("{message}")]
-pub struct AdditionalContext {
+pub(crate) struct AdditionalContext {
     message: String,
     #[source]
     source: Box<dyn std::error::Error + Sync + Send + 'static>,
@@ -245,8 +245,9 @@ impl AdditionalContext {
 }
 
 /// Trait for wrapping errors in Result with descriptive context strings.
-pub trait AddContext<T, E, A> {
+pub(crate) trait AddContext<T, E, A> {
     /// Map the error with an error containing the context string.
+    #[allow(dead_code)]
     fn with_context<C>(self, context: C) -> Result<T, A>
     where
         C: Into<String>;

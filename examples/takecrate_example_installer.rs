@@ -49,7 +49,7 @@ fn main2() -> anyhow::Result<()> {
             SelfCommand::Install { quiet } => {
                 if quiet {
                     // Automatically install to user account by default
-                    let config = InstallConfig::new()?;
+                    let config = InstallConfig::new_user()?;
                     takecrate::install(&manifest, &config)?;
                 } else {
                     // Otherwise, show guided install

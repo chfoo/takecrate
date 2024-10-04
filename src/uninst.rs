@@ -157,14 +157,16 @@ impl Uninstaller {
         #[cfg(unix)]
         {
             if let Some(exe_dir) = &self.manifest.search_path {
-                let profile = crate::os::unix::get_current_shell_profile()?;
-                tracing::info!(?exe_dir, ?profile, "remove PATH environment variable");
+                if let Some(profile) = &self.manifest.shell_profile_path {
+                    let profile = profile.clone();
+                    tracing::info!(?exe_dir, ?profile, "remove PATH environment variable");
 
-                crate::os::unix::remove_path_env_var(
-                    self.manifest.access_scope,
-                    exe_dir.as_os_str(),
-                    &profile,
-                )?;
+                    crate::os::unix::remove_path_env_var(
+                        self.manifest.access_scope,
+                        exe_dir.as_os_str(),
+                        &profile,
+                    )?;
+                }
             }
         }
         Ok(())

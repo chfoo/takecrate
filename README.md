@@ -4,8 +4,6 @@ Rust library for adding installer functionality to standalone binaries.
 
 This crate enables CLI applications to be distributed as standalone binaries that can install and uninstall themselves.
 
-*Note: Work in progress.*
-
 [![Crates.io Version](https://img.shields.io/crates/v/takecrate)](https://crates.io/crates/takecrate)
 [![docs.rs](https://img.shields.io/docsrs/takecrate)](https://docs.rs/takecrate)
 
@@ -22,10 +20,14 @@ if exe_name.ends_with("_installer") {
 
 ## Features
 
-* Supported OS families: unix, windows
-* Saves checksums to manifest files and uses them before overwriting or deleting files.
-* Installs for the current user or all users.
-* Modifies search path (PATH).
+This crate aims to be a safe and easy way for users to use binaries by automating the file copying and search path modification.
+
+Supported OS families: unix (macOS and Linux), windows.
+
+In addition, notable quality of life features include:
+
+* Including files bundled beside the binary.
+* Option for installing for the current user or for all users.
 
 ## Contributing & support
 

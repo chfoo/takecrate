@@ -28,10 +28,20 @@ pub struct InstallConfig {
 
 impl InstallConfig {
     /// Create a new config suitable for a User install.
-    pub fn new() -> Result<Self, InstallerError> {
+    pub fn new_user() -> Result<Self, InstallerError> {
         Ok(Self {
-            access_scope: Default::default(),
-            destination: Default::default(),
+            access_scope: AccessScope::User,
+            destination: AppPathPrefix::User,
+            source_dir: crate::os::current_exe_dir()?,
+            modify_os_search_path: true,
+        })
+    }
+
+    /// Create a new config suitable for a System install.
+    pub fn new_system() -> Result<Self, InstallerError> {
+        Ok(Self {
+            access_scope: AccessScope::System,
+            destination: AppPathPrefix::System,
             source_dir: crate::os::current_exe_dir()?,
             modify_os_search_path: true,
         })

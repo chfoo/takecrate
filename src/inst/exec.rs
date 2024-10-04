@@ -64,6 +64,8 @@ impl Executor {
             search_path: self.plan.search_path.clone(),
             #[cfg(windows)]
             app_path_exe_name: self.plan.app_path.clone().map(|item| item.exe_name),
+            #[cfg(unix)]
+            shell_profile_path: self.plan.shell_profile_path.clone(),
         };
 
         for entry in &self.plan.dirs {
@@ -218,9 +220,15 @@ impl Executor {
 
         #[cfg(unix)]
         if let Some(part) = &self.plan.search_path {
-            let profile = crate::os::unix::get_current_shell_profile()?;
-            tracing::info!(?part, ?profile, "modifying PATH environment variable");
-            crate::os::unix::add_path_env_var(self.plan.access_scope, part.as_os_str(), &profile)?;
+            if let Some(profile) = &self.plan.shell_profile_path {
+                let profile = profile.clone();
+                tracing::info!(?part, ?profile, "modifying PATH environment variable");
+                crate::os::unix::add_path_env_var(
+                    self.plan.access_scope,
+                    part.as_os_str(),
+                    &profile,
+                )?;
+            }
         }
         Ok(())
     }

@@ -102,6 +102,9 @@ pub struct DiskManifest {
     /// The filename used for the App Paths entry.
     #[cfg(any(windows, doc))]
     pub app_path_exe_name: Option<String>,
+    /// The path of the modified shell profile.
+    #[cfg(any(unix, doc))]
+    pub shell_profile_path: Option<PathBuf>,
 }
 
 impl DiskManifest {

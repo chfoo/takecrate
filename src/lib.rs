@@ -3,50 +3,43 @@
 //! This crate enables CLI applications to be distributed as standalone
 //! binaries that can install and uninstall themselves.
 //!
+//! ## Overview
+//!
+//! To get started:
+//!
+//! 1. Create a unique ID for your application using [`AppId`].
+//! 2. Create the listing of input files using [`PackageManifest`].
+//! 3. Based on context, run [`install_interactive()`] or [`uninstall_interactive`], or continue normally in your binary.
+//! 4. If you need a included data file in a installation, use [`manifest()`] to get a [`DiskManifest`].
+//!
 //! ## Example
 //!
 //! ```
+//! # use std::error::Error;
 //! # use takecrate::manifest::AppId;
 //! # use takecrate::inst::PackageManifest;
+//! # fn main() -> Result<(), Box<dyn Error>> {
 //! # let exe_name = "";
-//! let app_id = AppId::new("com.example.my-app").unwrap();
-//! let manifest = PackageManifest::new(&app_id).with_self_exe().unwrap();
+//! let app_id = AppId::new("com.example.my-app")?;
+//! let manifest = PackageManifest::new(&app_id).with_self_exe()?;
 //!
 //! if exe_name.ends_with("_installer") {
-//!     takecrate::install_interactive(&manifest).unwrap();
+//!     takecrate::install_interactive(&manifest)?;
 //! }
+//! # Ok(())
+//! # }
 //! ```
 //!
-//! ## Installer principles
+//! ## Further reading
 //!
-//! The crate tries to be as safe as possible, but complete safety and
-//! security promises is not guaranteed.
-//!
-//! ### Files
-//!
-//! Before overwriting or removing a file, a checksum is compared
-//! to one stored in a manifest.
-//! If they don't match, the installation is stopped.
-//!
-//! ### Search paths
-//!
-//! When the search path (PATH) is being modified, it's possible that a
-//! TOCTOU race condition may cause unwanted behavior if there's another
-//! installer operating. On Windows, some paths might not be preserved.
-//! On Unix, the user's .profile file might be be corrupted.
-//!
-//! ### Terminal security
-//!
-//! If a GUI terminal is launched with administrator-level permissions by the OS,
-//! it may be possible for a user to access unauthorized administrator-level
-//! resources through the terminal application
-//! (e.g., right-clicking the window, selecting Properties, a help link,
-//! and launching a web browser that can open and run arbitrary files).
-//!
+//! [More information](crate::lib_doc)
+
 use error::InstallerError;
 use inst::{InstallConfig, Installer, PackageManifest};
 use manifest::{AppId, DiskManifest};
 use uninst::Uninstaller;
+
+pub mod lib_doc;
 
 pub mod error;
 pub mod inst;

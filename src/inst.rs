@@ -1,27 +1,4 @@
 //! Installer functionality.
-//!
-//! ## Additional files
-//!
-//! Sometimes, you may need to include additional files beside the binary.
-//! This crate does not implement self-extracting archives. However, you
-//! can still bundle your files into a zip or tar.gz file and instruct the
-//! user to extract them.
-//!
-//! Additional files example:
-//!
-//! ```
-//! # use takecrate::inst::PackageManifest;
-//! # use takecrate::manifest::FileType;
-//! # use takecrate::manifest::AppId;
-//! # let app_id = AppId::new("com.example.my_app").unwrap();
-//! let manifest = PackageManifest::new(&app_id)
-//!     .with_self_exe()
-//!     .unwrap()
-//!     .with_file_entry("my_data_file.dat", FileType::Data)
-//!     .unwrap()
-//!     .with_file_entry("another_data_file.dat", FileType::Data)
-//!     .unwrap();
-//! ```
 use std::cell::RefCell;
 use std::rc::Rc;
 

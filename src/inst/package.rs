@@ -11,6 +11,23 @@ use crate::{
 /// Details of the binary and any associated files to be installed.
 ///
 /// For the installed counterpart, see [`DiskManifest`](crate::manifest::DiskManifest).
+///
+/// # Example
+///
+/// ```
+/// # use std::error::Error;
+/// # use takecrate::inst::PackageManifest;
+/// # use takecrate::manifest::FileType;
+/// # use takecrate::manifest::AppId;
+/// # fn main() -> Result<(), Box<dyn Error>> {
+/// # let app_id = AppId::new("com.example.my_app")?;
+/// let manifest = PackageManifest::new(&app_id)
+///     .with_self_exe()?
+///     .with_file_entry("my_data_file.dat", FileType::Data)?
+///     .with_file_entry("another_data_file.dat", FileType::Data)?;
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct PackageManifest {
