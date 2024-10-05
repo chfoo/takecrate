@@ -239,16 +239,18 @@ impl Uninstaller {
     fn remove_dirs(&self) -> Result<(), InstallerError> {
         for entry in &self.manifest.dirs {
             if !entry.preserve {
-                if std::fs::read_dir(&entry.path)?.count() == 0 {
-                    tracing::info!(path = ?entry.path, "removing directory");
+                if entry.path.exists() {
+                    if std::fs::read_dir(&entry.path)?.count() == 0 {
+                        tracing::info!(path = ?entry.path, "removing directory");
 
-                    if entry.path.exists() {
                         std::fs::remove_dir(&entry.path).with_contextc(|_e| {
                             format!("failed to remove directory {:?}", entry.path)
                         })?;
+                    } else {
+                        tracing::warn!(path = ?entry.path, "cannot remove directory: not empty");
                     }
                 } else {
-                    tracing::warn!(path = ?entry.path, "cannot remove directory: not empty");
+                    tracing::warn!(path = ?entry.path, "cannot remove directory: is missing");
                 }
             }
         }
