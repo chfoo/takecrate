@@ -10,17 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test:
-    name: Run tests
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-    - uses: actions/checkout@v4
-    - uses: Swatinem/rust-cache@v2
-    - name: Run tests
-      run: cargo test --verbose
-
-  example:
+  multi-tester:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -31,6 +21,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: Swatinem/rust-cache@v2
+    - name: Run tests
+      run: cargo test --verbose
     - name: Run example install
       run: cargo xtask run-example-installer -p="self install --quiet"
     - name: Run example uninstall

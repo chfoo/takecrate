@@ -7,7 +7,8 @@ use plan::Planner;
 
 use crate::error::{InstallerError, InstallerErrorKind};
 use crate::os::AccessScope;
-use crate::tui::{GuidedDialogButton, Tui};
+#[cfg(feature = "ui")]
+use crate::tui::Tui;
 
 pub use self::config::*;
 pub use self::package::*;
@@ -21,7 +22,9 @@ mod plan;
 #[derive(Debug)]
 pub struct Installer {
     package_manifest: PackageManifest,
+    #[cfg(feature = "ui")]
     tui: Rc<RefCell<Tui>>,
+    lang_tag: String,
 }
 
 impl Installer {
@@ -29,16 +32,27 @@ impl Installer {
     pub fn new(package_manifest: &PackageManifest) -> Self {
         Self {
             package_manifest: package_manifest.clone(),
+            #[cfg(feature = "ui")]
             tui: Rc::new(RefCell::new(Tui::new())),
+            lang_tag: String::new(),
         }
     }
 
+    /// Sets the BCP 47 language tag used for the UI.
+    #[cfg(feature = "ui")]
+    pub fn with_lang_tag(mut self, lang_tag: String) -> Self {
+        self.tui.borrow_mut().set_lang_tag(&lang_tag);
+        self.lang_tag = lang_tag;
+        self
+    }
+
     /// Install with a TUI.
+    #[cfg(feature = "ui")]
     pub fn run_interactive(&mut self) -> Result<(), InstallerError> {
         self.tui.borrow_mut().set_name(
             self.package_manifest
                 .app_metadata
-                .get_display_name(&crate::locale::current_lang_tag()),
+                .get_display_name(&self.detect_lang_tag()),
             &self.package_manifest.app_metadata.display_version,
         );
         self.tui.borrow_mut().run_background();
@@ -62,6 +76,22 @@ impl Installer {
         result
     }
 
+    fn detect_lang_tag(&self) -> String {
+        if !self.lang_tag.is_empty() {
+            return self.lang_tag.clone();
+        }
+
+        #[cfg(feature = "i18n")]
+        {
+            crate::locale::current_lang_tag()
+        }
+        #[cfg(not(feature = "i18n"))]
+        {
+            String::new()
+        }
+    }
+
+    #[cfg(feature = "ui")]
     fn run_interactive_impl(&mut self) -> Result<(), InstallerError> {
         let mut config = InstallConfig {
             source_dir: crate::os::current_exe_dir()?,
@@ -109,9 +139,11 @@ impl Installer {
 
         tracing::debug!(?plan, "created plan");
 
+        #[cfg(feature = "ui")]
         let tui = self.tui.clone();
         let mut executor = Executor::new(&self.package_manifest.app_id, &plan)
             .with_progress_callback(move |current, total| {
+                #[cfg(feature = "ui")]
                 if tui.borrow().is_running() {
                     let _ = tui.borrow_mut().update_install_progress(current, total);
                 }
@@ -120,14 +152,5 @@ impl Installer {
         executor.run()?;
 
         Ok(())
-    }
-}
-
-impl<T> GuidedDialogButton<T> {
-    fn unwrap_button(self) -> Result<T, InstallerError> {
-        match self {
-            GuidedDialogButton::Exit => Err(InstallerErrorKind::InterruptedByUser.into()),
-            GuidedDialogButton::Next(value) => Ok(value),
-        }
     }
 }

@@ -154,6 +154,11 @@ impl DiskManifest {
     pub fn total_file_size(&self) -> u64 {
         self.files.iter().map(|entry| entry.len).sum()
     }
+
+    /// Returns the file entry for the main executable.
+    pub fn main_executable(&self) -> Option<&DiskFileEntry> {
+        self.files.iter().find(|entry| entry.is_main_executable)
+    }
 }
 
 /// Information about the application's location on disk.

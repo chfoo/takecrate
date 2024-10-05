@@ -2,10 +2,11 @@
 
 use std::{cell::RefCell, rc::Rc};
 
+#[cfg(feature = "ui")]
+use crate::tui::Tui;
 use crate::{
     error::{AddContext, AddInstallerContext, InstallerError, InstallerErrorKind},
     manifest::{AppId, DiskManifest},
-    tui::Tui,
 };
 
 /// The uninstaller interface.
@@ -14,6 +15,7 @@ pub struct Uninstaller {
     app_id: AppId,
     manifest: DiskManifest,
     manual_manifest: Option<DiskManifest>,
+    #[cfg(feature = "ui")]
     tui: Rc<RefCell<Tui>>,
 }
 
@@ -26,6 +28,7 @@ impl Uninstaller {
     pub fn new(app_id: &AppId) -> Self {
         Self {
             app_id: app_id.clone(),
+            #[cfg(feature = "ui")]
             tui: Rc::new(RefCell::new(Tui::new())),
             manifest: Default::default(),
             manual_manifest: None,
@@ -38,7 +41,15 @@ impl Uninstaller {
         self
     }
 
+    /// Sets the BCP 47 language tag used for the UI.
+    #[cfg(feature = "ui")]
+    pub fn with_lang_tag(self, lang_tag: String) -> Self {
+        self.tui.borrow_mut().set_lang_tag(&lang_tag);
+        self
+    }
+
     /// Uninstall with a TUI.
+    #[cfg(feature = "ui")]
     pub fn run_interactive(&mut self) -> Result<(), InstallerError> {
         self.tui.borrow_mut().run_background();
 
@@ -61,6 +72,7 @@ impl Uninstaller {
         result
     }
 
+    #[cfg(feature = "ui")]
     fn run_interactive_impl(&mut self) -> Result<(), InstallerError> {
         self.discover_manifest()?;
 
@@ -212,6 +224,8 @@ impl Uninstaller {
             }
 
             current += entry.len;
+
+            #[cfg(feature = "ui")]
             if self.tui.borrow().is_running() {
                 self.tui
                     .borrow_mut()

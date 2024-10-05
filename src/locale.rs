@@ -27,14 +27,43 @@ pub fn current_lang_tag() -> String {
     current_lang_id().to_string()
 }
 
-pub fn text(text_id: &str) -> String {
-    LOCALES.lookup(current_lang_id(), text_id)
+pub struct Locale {
+    lang_id: LanguageIdentifier,
 }
 
-pub fn text_args<'a, A>(text_id: &str, args: A) -> String
-where
-    A: Into<HashMap<&'a str, FluentValue<'a>>>,
-{
-    let args: HashMap<&str, FluentValue<'_>> = args.into();
-    LOCALES.lookup_with_args(current_lang_id(), text_id, &args)
+impl Locale {
+    fn new(id: LanguageIdentifier) -> Self {
+        Self { lang_id: id }
+    }
+
+    pub fn with_system() -> Self {
+        Self::new(current_lang_id().clone())
+    }
+
+    // pub fn with_language_tag(value: &str) -> Self {
+    //     let lang_id = match LanguageIdentifier::from_str(value) {
+    //         Ok(value) => value,
+    //         Err(_) => fluent_templates::langid!("en-US"),
+    //     };
+    //     Self::new(lang_id)
+    // }
+
+    pub fn set_language_tag(&mut self, value: &str) {
+        self.lang_id = match LanguageIdentifier::from_str(value) {
+            Ok(value) => value,
+            Err(_) => fluent_templates::langid!("en-US"),
+        };
+    }
+
+    pub fn text(&self, text_id: &str) -> String {
+        LOCALES.lookup(&self.lang_id, text_id)
+    }
+
+    pub fn text_args<'a, A>(&self, text_id: &str, args: A) -> String
+    where
+        A: Into<HashMap<&'a str, FluentValue<'a>>>,
+    {
+        let args: HashMap<&str, FluentValue<'_>> = args.into();
+        LOCALES.lookup_with_args(&self.lang_id, text_id, &args)
+    }
 }

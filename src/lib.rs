@@ -39,14 +39,21 @@ use inst::{InstallConfig, Installer, PackageManifest};
 use manifest::{AppId, DiskManifest};
 use uninst::Uninstaller;
 
+#[cfg(
+    all(feature = "ui", not(feature = "i18n"))
+)]
+compile_error!("feature 'ui' depends on feature 'i18n'");
+
 pub mod lib_doc;
 
 pub mod error;
 pub mod inst;
+#[cfg(feature = "i18n")]
 mod locale;
 pub mod manifest;
 pub mod os;
 pub mod path;
+#[cfg(feature = "ui")]
 mod tui;
 pub mod uninst;
 
@@ -58,6 +65,7 @@ pub mod uninst;
 /// If the user cancels the guide, the error kind [`InterruptedByUser`](crate::error::InstallerErrorKind::InterruptedByUser)
 /// will be returned. If an error occurs, an appropriate error kind will be
 /// returned.
+#[cfg(feature = "ui")]
 pub fn install_interactive(manifest: &PackageManifest) -> Result<(), InstallerError> {
     let mut installer = Installer::new(manifest);
     installer.run_interactive()
@@ -79,6 +87,7 @@ pub fn install(manifest: &PackageManifest, config: &InstallConfig) -> Result<(),
 ///
 /// If there is both a User and System installation, the uninstaller will
 /// uninstall the User version.
+#[cfg(feature = "ui")]
 pub fn uninstall_interactive(app_id: &AppId) -> Result<(), InstallerError> {
     let mut uninstaller = Uninstaller::new(app_id);
     uninstaller.run_interactive()
