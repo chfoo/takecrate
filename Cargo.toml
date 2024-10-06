@@ -20,6 +20,8 @@ default = ["ui", "i18n"]
 ui = ["dep:cursive"]
 ## Enables internationalization and localization (globalization) support
 i18n = ["dep:fluent-bundle", "dep:fluent-templates", "dep:sys-locale"]
+## Enables Cursive themes API which exposes "unstable" dependency types.
+ui-theme = []
 
 [dependencies]
 crc32c = "0.6.8"

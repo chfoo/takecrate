@@ -5,8 +5,12 @@ use std::{
 };
 
 use cursive::{
+    theme::Theme,
     view::Scrollable,
-    views::{Dialog, LinearLayout, RadioGroup, TextView},
+    views::{
+        stack_view::{Fullscreen, Transparent},
+        Dialog, LinearLayout, RadioGroup, TextView,
+    },
     CbSink, Cursive, CursiveExt,
 };
 use dialog::GuidedDialogButton;
@@ -17,6 +21,7 @@ use crate::{
     os::AccessScope,
 };
 
+mod bg;
 mod dialog;
 
 pub struct Tui {
@@ -25,6 +30,8 @@ pub struct Tui {
     app_name: String,
     app_version: String,
     locale: Locale,
+    theme: Option<Theme>,
+    enable_branding: bool,
 }
 
 impl Tui {
@@ -35,6 +42,8 @@ impl Tui {
             app_name: String::new(),
             app_version: String::new(),
             locale: Locale::with_system(),
+            theme: None,
+            enable_branding: true,
         }
     }
 
@@ -51,13 +60,27 @@ impl Tui {
         self.locale.set_language_tag(value);
     }
 
+    #[cfg(feature = "ui-theme")]
+    pub fn set_theme(&mut self, value: Theme) {
+        self.theme = Some(value);
+    }
+
+    pub fn set_enable_branding(&mut self, enable_branding: bool) {
+        self.enable_branding = enable_branding;
+    }
+
     pub fn run_background(&mut self) {
         assert!(self.channel.is_none());
 
         let (sender, receiver) = std::sync::mpsc::sync_channel(1);
+        let theme = self.theme.clone();
 
         let join_handle = std::thread::spawn(move || {
             let mut cursive = cursive::Cursive::new();
+
+            if let Some(theme) = theme {
+                cursive.set_theme(theme);
+            }
 
             sender.send(cursive.cb_sink().clone()).unwrap();
 
@@ -93,7 +116,28 @@ impl Tui {
             cursive.add_layer(dialog);
         })?;
 
-        Ok(dialog_receiver.recv().unwrap())
+        dialog_receiver
+            .recv()
+            .map_err(|_error| InstallerErrorKind::Terminal.into())
+    }
+
+    pub fn set_up_background_text(&self, is_uninstall: bool) -> Result<(), InstallerError> {
+        let text = if is_uninstall {
+            self.locale
+                .text_args("uninstaller-title", [("app_name", (&self.app_name).into())])
+        } else {
+            self.locale
+                .text_args("installer-title", [("app_name", (&self.app_name).into())])
+        };
+        let subtext = self.locale.text("powered-by-library");
+
+        let view = bg::background_text(&text, &subtext);
+
+        self.in_cursive(|cursive| {
+            cursive
+                .screen_mut()
+                .add_layer(Transparent(Fullscreen(view)));
+        })
     }
 
     pub fn show_error<E>(&self, error: E) -> Result<(), InstallerError>
@@ -132,32 +176,29 @@ impl Tui {
     }
 
     pub fn installation_intro(&self) -> Result<GuidedDialogButton<()>, InstallerError> {
-        let title = self.locale.text("installer-title");
         let args = [
             ("app_name", (&self.app_name).into()),
             ("app_version", (&self.app_version).into()),
         ];
         let text = self.locale.text_args("installer-intro", args);
 
-        let (mut dialog, dialog_receiver) = dialog::guided_dialog(&self.locale, &title, |_| ());
+        let (mut dialog, dialog_receiver) = dialog::guided_dialog(&self.locale, "", |_| ());
         dialog.set_content(TextView::new(text).scrollable());
 
         self.show_wait_dialog(dialog, dialog_receiver)
     }
 
     pub fn installation_conclusion(&self) -> Result<(), InstallerError> {
-        let title = self.locale.text("installer-title");
         let args = [("app_name", (&self.app_name).into())];
         let text = self.locale.text_args("installer-conclusion", args);
 
-        let (mut dialog, dialog_receiver) = dialog::info_dialog(&self.locale, &title);
+        let (mut dialog, dialog_receiver) = dialog::info_dialog(&self.locale, "");
         dialog.set_content(TextView::new(text).scrollable());
 
         self.show_wait_dialog(dialog, dialog_receiver)
     }
 
     pub fn prompt_access_scope(&self) -> Result<GuidedDialogButton<AccessScope>, InstallerError> {
-        let title = self.locale.text("installer-title");
         let mut layout = LinearLayout::vertical();
         layout.add_child(TextView::new(self.locale.text("access-scope-prompt")));
 
@@ -166,17 +207,15 @@ impl Tui {
         layout
             .add_child(radio_group.button(AccessScope::System, self.locale.text("for-all-users")));
 
-        let (mut dialog, dialog_receiver) =
-            dialog::guided_dialog(&self.locale, &title, move |_| {
-                Arc::unwrap_or_clone(radio_group.selection())
-            });
+        let (mut dialog, dialog_receiver) = dialog::guided_dialog(&self.locale, "", move |_| {
+            Arc::unwrap_or_clone(radio_group.selection())
+        });
         dialog.set_content(layout.scrollable());
 
         self.show_wait_dialog(dialog, dialog_receiver)
     }
 
     pub fn prompt_modify_search_path(&self) -> Result<GuidedDialogButton<bool>, InstallerError> {
-        let title = self.locale.text("installer-title");
         let mut layout = LinearLayout::vertical();
         layout.add_child(TextView::new(self.locale.text("modify-search-path-prompt")));
 
@@ -184,28 +223,23 @@ impl Tui {
         layout.add_child(radio_group.button(true, self.locale.text("modify-search-path")));
         layout.add_child(radio_group.button(false, self.locale.text("do-not-modify-search-path")));
 
-        let (mut dialog, dialog_receiver) =
-            dialog::guided_dialog(&self.locale, &title, move |_| {
-                Arc::unwrap_or_clone(radio_group.selection())
-            });
+        let (mut dialog, dialog_receiver) = dialog::guided_dialog(&self.locale, "", move |_| {
+            Arc::unwrap_or_clone(radio_group.selection())
+        });
         dialog.set_content(layout.scrollable());
 
         self.show_wait_dialog(dialog, dialog_receiver)
     }
 
     pub fn prompt_install_confirm(&self) -> Result<GuidedDialogButton<()>, InstallerError> {
-        let title = self.locale.text("installer-title");
-        let (mut dialog, dialog_receiver) =
-            dialog::guided_dialog(&self.locale, &title, move |_| ());
+        let (mut dialog, dialog_receiver) = dialog::guided_dialog(&self.locale, "", move |_| ());
         dialog.set_content(TextView::new(self.locale.text("installer-confirm")).scrollable());
 
         self.show_wait_dialog(dialog, dialog_receiver)
     }
 
     pub fn show_install_progress_dialog(&self) -> Result<(), InstallerError> {
-        let title = self.locale.text("installer-title");
-
-        let dialog = dialog::progress_dialog(&title);
+        let dialog = dialog::progress_dialog("");
 
         let text = self.locale.text("installing");
 
@@ -238,8 +272,7 @@ impl Tui {
         ];
         let text = self.locale.text_args("uninstaller-intro", args);
 
-        let (mut dialog, dialog_receiver) =
-            dialog::guided_dialog(&self.locale, &self.locale.text("uninstaller-title"), |_| ());
+        let (mut dialog, dialog_receiver) = dialog::guided_dialog(&self.locale, "", |_| ());
         dialog.set_content(TextView::new(text).scrollable());
 
         self.show_wait_dialog(dialog, dialog_receiver)
@@ -249,16 +282,14 @@ impl Tui {
         let args = [("app_name", (&self.app_name).into())];
         let text = self.locale.text_args("uninstaller-conclusion", args);
 
-        let (mut dialog, dialog_receiver) =
-            dialog::info_dialog(&self.locale, &self.locale.text("uninstaller-title"));
+        let (mut dialog, dialog_receiver) = dialog::info_dialog(&self.locale, "");
         dialog.set_content(TextView::new(text).scrollable());
 
         self.show_wait_dialog(dialog, dialog_receiver)
     }
 
     pub fn show_uninstall_progress_dialog(&self) -> Result<(), InstallerError> {
-        let title = self.locale.text("uninstaller-title");
-        let dialog = dialog::progress_dialog(&title);
+        let dialog = dialog::progress_dialog("");
         let text = self.locale.text("uninstalling");
 
         self.in_cursive(move |cursive| {

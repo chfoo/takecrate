@@ -46,6 +46,22 @@ impl Installer {
         self
     }
 
+    /// Sets the theme for the UI.
+    #[cfg(feature = "ui-theme")]
+    pub fn with_theme(self, value: cursive::theme::Theme) -> Self {
+        self.tui.borrow_mut().set_theme(value);
+        self
+    }
+
+    /// Sets whether this library's branding is enabled in the UI.
+    ///
+    /// Default is `true`.
+    #[cfg(feature = "ui")]
+    pub fn with_branding(self, value: bool) -> Self {
+        self.tui.borrow_mut().set_enable_branding(value);
+        self
+    }
+
     /// Install with a TUI.
     #[cfg(feature = "ui")]
     pub fn run_interactive(&mut self) -> Result<(), InstallerError> {
@@ -99,6 +115,8 @@ impl Installer {
         };
 
         let tui = self.tui.borrow_mut();
+
+        tui.set_up_background_text(false)?;
 
         self.package_manifest.verify(&config.source_dir)?;
         tui.installation_intro()?.unwrap_button()?;

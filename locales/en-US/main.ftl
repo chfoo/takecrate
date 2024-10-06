@@ -1,8 +1,12 @@
+-library-name = Takecrate
+
+powered-by-library = Powered by { -library-name }
+
 button-ok = OK
 button-exit = ❌ Exit
 button-next = ✅ Next
 
-installer-title = 📦 Installer
+installer-title = 📦 { $app_name } Installer
 installer-intro =
     This installer will guide you through the installation of { $app_name } { $app_version }.
 
@@ -26,7 +30,7 @@ app-already-installed = The application is already installed.
 
 installing = Installing...
 
-uninstaller-title = 🗑️ Uninstaller
+uninstaller-title = 🗑️ { $app_name } Uninstaller
 uninstaller-intro = This uninstaller will uninstall { $app_name } { $app_version }.
 uninstaller-conclusion = { $app_name } was uninstalled successfully.
 

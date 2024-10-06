@@ -43,8 +43,24 @@ impl Uninstaller {
 
     /// Sets the BCP 47 language tag used for the UI.
     #[cfg(feature = "ui")]
-    pub fn with_lang_tag(self, lang_tag: String) -> Self {
-        self.tui.borrow_mut().set_lang_tag(&lang_tag);
+    pub fn with_language_tag(self, value: String) -> Self {
+        self.tui.borrow_mut().set_lang_tag(&value);
+        self
+    }
+
+    /// Sets the theme for the UI.
+    #[cfg(feature = "ui-theme")]
+    pub fn with_theme(self, value: cursive::theme::Theme) -> Self {
+        self.tui.borrow_mut().set_theme(value);
+        self
+    }
+
+    /// Sets whether this library's branding is enabled in the UI.
+    ///
+    /// Default is `true`.
+    #[cfg(feature = "ui")]
+    pub fn with_branding(self, value: bool) -> Self {
+        self.tui.borrow_mut().set_enable_branding(value);
         self
     }
 
@@ -74,9 +90,12 @@ impl Uninstaller {
 
     #[cfg(feature = "ui")]
     fn run_interactive_impl(&mut self) -> Result<(), InstallerError> {
+        self.tui.borrow().set_up_background_text(true)?;
+
         self.discover_manifest()?;
 
         let mut tui = self.tui.borrow_mut();
+
         tui.set_name(&self.manifest.app_name, &self.manifest.app_version);
 
         tui.uninstallation_intro()?;
