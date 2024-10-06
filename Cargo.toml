@@ -3,7 +3,7 @@ members = ["xtask"]
 
 [package]
 name = "takecrate"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "MPL-2.0"
 description = "Adds installer functionality to standalone binaries for distribution of CLI applications"
@@ -54,3 +54,8 @@ whoami = "1.5.2"
 
 [lints.rust]
 missing-docs = "warn"
+
+# https://users.rust-lang.org/t/how-to-document-optional-features-in-api-docs/64577/3
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

@@ -34,6 +34,8 @@
 //!
 //! [More information](crate::lib_doc)
 
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+
 use error::InstallerError;
 use inst::{InstallConfig, Installer, PackageManifest};
 use manifest::{AppId, DiskManifest};
@@ -93,7 +95,7 @@ pub fn uninstall_interactive(app_id: &AppId) -> Result<(), InstallerError> {
     uninstaller.run_interactive()
 }
 
-/// Uninstalls the binary from the device with the given application UUID.
+/// Uninstalls the binary from the device with the given application ID.
 ///
 /// This function is intended for "quiet" uninstalls where the uninstallation
 /// occurs automatically, such as, a shell script.
