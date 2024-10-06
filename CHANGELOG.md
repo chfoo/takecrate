@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 (2024-10-06)
+
+* Fixed missing localization string.
+
 ## 0.2.0 (2024-10-06)
 
 * Fixed error uninstalling already deleted directory.
