@@ -98,7 +98,7 @@ impl Uninstaller {
 
         tui.set_name(&self.manifest.app_name, &self.manifest.app_version);
 
-        tui.uninstallation_intro()?;
+        tui.uninstallation_intro()?.unwrap_button()?;
         tui.show_uninstall_progress_dialog()?;
 
         drop(tui);
