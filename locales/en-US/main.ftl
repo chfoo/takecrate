@@ -26,6 +26,8 @@ do-not-modify-search-path = No, do not change it
 
 app-already-installed = The application is already installed.
 
+removing-existing-before-install = An existing installation was found. It will be replaced.
+
 installing = Installing...
 
 uninstaller-title = 🗑️ { $app_name } Uninstaller

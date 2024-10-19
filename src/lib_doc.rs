@@ -15,10 +15,6 @@
 //!
 //! For details on the search path, see [`InstallConfig`](crate::InstallConfig).
 //!
-//! ## Known issues
-//!
-//! * Reinstallation is not supported. The user needs to uninstall before reinstalling.
-//!
 //! ## Additional files
 //!
 //! Sometimes, you may need to include additional files beside the binary.

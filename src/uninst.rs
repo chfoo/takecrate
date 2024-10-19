@@ -64,6 +64,13 @@ impl Uninstaller {
         self
     }
 
+    #[cfg(feature = "ui")]
+    // To be called from the installer only
+    pub(crate) fn with_tui(mut self, tui: Rc<RefCell<Tui>>) -> Self {
+        self.tui = tui;
+        self
+    }
+
     /// Uninstall with a TUI.
     #[cfg(feature = "ui")]
     pub fn run_interactive(&mut self) -> Result<(), InstallerError> {
@@ -90,6 +97,8 @@ impl Uninstaller {
 
     #[cfg(feature = "ui")]
     fn run_interactive_impl(&mut self) -> Result<(), InstallerError> {
+        use std::time::Duration;
+
         self.tui.borrow().set_up_background_text(true)?;
 
         self.discover_manifest()?;
@@ -106,6 +115,9 @@ impl Uninstaller {
 
         let tui = self.tui.borrow_mut();
 
+        // As described in the installer, pause briefly so the user can see we did something.
+        std::thread::sleep(Duration::from_millis(500));
+
         tui.hide_uninstall_progress_dialog()?;
         tui.uninstallation_conclusion()?;
 
@@ -116,6 +128,17 @@ impl Uninstaller {
     pub fn run(&mut self) -> Result<(), InstallerError> {
         self.discover_manifest()?;
         self.run_impl()
+    }
+
+    #[cfg(feature = "ui")]
+    // To be called from the installer only
+    pub(crate) fn run_from_installer_interactive(&mut self) -> Result<(), InstallerError> {
+        self.discover_manifest()?;
+        self.tui.borrow_mut().show_uninstall_progress_dialog()?;
+        self.run_impl()?;
+        self.tui.borrow_mut().hide_uninstall_progress_dialog()?;
+
+        Ok(())
     }
 
     fn run_impl(&mut self) -> Result<(), InstallerError> {

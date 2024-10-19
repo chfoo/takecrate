@@ -231,6 +231,15 @@ impl Tui {
         self.show_wait_dialog(dialog, dialog_receiver)
     }
 
+    pub fn prompt_uninstall_existing(&self) -> Result<GuidedDialogButton<()>, InstallerError> {
+        let (mut dialog, dialog_receiver) = dialog::guided_dialog(&self.locale, "", move |_| ());
+        dialog.set_content(
+            TextView::new(self.locale.text("removing-existing-before-install")).scrollable(),
+        );
+
+        self.show_wait_dialog(dialog, dialog_receiver)
+    }
+
     pub fn prompt_install_confirm(&self) -> Result<GuidedDialogButton<()>, InstallerError> {
         let (mut dialog, dialog_receiver) = dialog::guided_dialog(&self.locale, "", move |_| ());
         dialog.set_content(TextView::new(self.locale.text("installer-confirm")).scrollable());

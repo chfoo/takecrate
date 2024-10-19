@@ -121,7 +121,7 @@ fn create_app_package_manifest() -> anyhow::Result<PackageManifest> {
         .with_quiet_uninstall_args(&["self", "uninstall", "--quiet"]);
 
     // Information for the installer/uninstaller and OS app entries (if applicable)
-    manifest.app_metadata.display_name = "Example Installer".to_string();
+    manifest.app_metadata.display_name = "Takecrate Example Installer".to_string();
     manifest.app_metadata.display_version = "1.0.0".to_string();
 
     // Demonstration of including additional files.

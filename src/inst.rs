@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use exec::Executor;
-use plan::Planner;
+use plan::{InstallPlan, Planner};
 
 use crate::error::{InstallerError, InstallerErrorKind};
 use crate::os::AccessScope;
@@ -25,6 +25,7 @@ pub struct Installer {
     #[cfg(feature = "ui")]
     tui: Rc<RefCell<Tui>>,
     lang_tag: String,
+    plan: Option<InstallPlan>,
 }
 
 impl Installer {
@@ -35,6 +36,7 @@ impl Installer {
             #[cfg(feature = "ui")]
             tui: Rc::new(RefCell::new(Tui::new())),
             lang_tag: String::new(),
+            plan: None,
         }
     }
 
@@ -109,31 +111,59 @@ impl Installer {
 
     #[cfg(feature = "ui")]
     fn run_interactive_impl(&mut self) -> Result<(), InstallerError> {
+        use std::time::Duration;
+
         let mut config = InstallConfig {
             source_dir: crate::os::current_exe_dir()?,
             ..Default::default()
         };
 
-        let tui = self.tui.borrow_mut();
+        {
+            let tui = self.tui.borrow_mut();
 
-        tui.set_up_background_text(false)?;
+            tui.set_up_background_text(false)?;
 
-        self.package_manifest.verify(&config.source_dir)?;
-        tui.installation_intro()?.unwrap_button()?;
-        config.access_scope = tui.prompt_access_scope()?.unwrap_button()?;
-        config.destination = config.access_scope.into();
+            self.package_manifest.verify(&config.source_dir)?;
+            tui.installation_intro()?.unwrap_button()?;
+            config.access_scope = tui.prompt_access_scope()?.unwrap_button()?;
+            config.destination = config.access_scope.into();
 
-        // Modifying system search path on Unix not supported and likely
-        // not necessary.
-        if cfg!(windows) || config.access_scope == AccessScope::User {
-            config.modify_os_search_path = tui.prompt_modify_search_path()?.unwrap_button()?;
+            // Modifying system search path on Unix not supported and likely
+            // not necessary.
+            if cfg!(windows) || config.access_scope == AccessScope::User {
+                config.modify_os_search_path = tui.prompt_modify_search_path()?.unwrap_button()?;
+            }
         }
 
-        tui.prompt_install_confirm()?.unwrap_button()?;
-        tui.show_install_progress_dialog()?;
+        self.run_planner(&config)?;
+        let uninstall_required = self.plan.as_ref().unwrap().manifest_path.exists();
 
-        drop(tui);
-        self.run_impl(&config)?;
+        {
+            let tui = self.tui.borrow_mut();
+
+            if uninstall_required {
+                tui.prompt_uninstall_existing()?.unwrap_button()?;
+            }
+
+            tui.prompt_install_confirm()?.unwrap_button()?;
+        }
+
+        self.run_uninstaller_interactive()?;
+
+        self.tui.borrow_mut().show_install_progress_dialog()?;
+
+        if uninstall_required {
+            // Because it happens so fast, the user might be confused if they
+            // see brief glimpse of only the uninstaller progress bar.
+            // A visual pause is needed so that they can see the installer
+            // progress bar.
+            std::thread::sleep(Duration::from_millis(500));
+        }
+
+        self.run_executor()?;
+
+        // As described above, pause briefly so the user can see we did something.
+        std::thread::sleep(Duration::from_millis(500));
 
         let tui = self.tui.borrow_mut();
 
@@ -146,26 +176,75 @@ impl Installer {
     /// Install automatically.
     pub fn run(&mut self, config: &InstallConfig) -> Result<(), InstallerError> {
         self.package_manifest.verify(&config.source_dir)?;
-        self.run_impl(config)
+        self.run_planner(config)?;
+        self.run_uninstaller()?;
+        self.run_executor()?;
+        Ok(())
     }
 
-    fn run_impl(&mut self, config: &InstallConfig) -> Result<(), InstallerError> {
+    fn run_planner(&mut self, config: &InstallConfig) -> Result<(), InstallerError> {
         tracing::debug!(package_manifest = ?self.package_manifest, ?config, "running planner");
 
         let mut planner = Planner::new(&self.package_manifest, config);
         let plan = planner.run()?;
 
         tracing::debug!(?plan, "created plan");
+        self.plan = Some(plan);
+
+        Ok(())
+    }
+
+    #[cfg(feature = "ui")]
+    fn run_uninstaller_interactive(&mut self) -> Result<(), InstallerError> {
+        let manifest_path = &self.plan.as_ref().unwrap().manifest_path;
+        let uninstall_required = manifest_path.exists();
+
+        if !uninstall_required {
+            return Ok(());
+        }
+
+        let manifest = crate::manifest::DiskManifest::load(manifest_path)?;
+
+        let mut uninstaller = crate::uninst::Uninstaller::new(&manifest.app_id)
+            .with_manifest(&manifest)
+            .with_tui(self.tui.clone());
+
+        uninstaller.run_from_installer_interactive()?;
+
+        Ok(())
+    }
+
+    fn run_uninstaller(&mut self) -> Result<(), InstallerError> {
+        let manifest_path = &self.plan.as_ref().unwrap().manifest_path;
+        let uninstall_required = manifest_path.exists();
+
+        if !uninstall_required {
+            return Ok(());
+        }
+
+        let manifest = crate::manifest::DiskManifest::load(manifest_path)?;
+
+        let mut uninstaller =
+            crate::uninst::Uninstaller::new(&manifest.app_id).with_manifest(&manifest);
+
+        uninstaller.run()?;
+
+        Ok(())
+    }
+
+    fn run_executor(&mut self) -> Result<(), InstallerError> {
+        let plan = self.plan.as_ref().unwrap();
+        let mut executor = Executor::new(&self.package_manifest.app_id, plan);
 
         #[cfg(feature = "ui")]
-        let tui = self.tui.clone();
-        let mut executor = Executor::new(&self.package_manifest.app_id, &plan)
-            .with_progress_callback(move |current, total| {
-                #[cfg(feature = "ui")]
-                if tui.borrow().is_running() {
+        if self.tui.borrow().is_running() {
+            let tui = self.tui.clone();
+            if tui.borrow().is_running() {
+                executor = executor.with_progress_callback(move |current, total| {
                     let _ = tui.borrow_mut().update_install_progress(current, total);
-                }
-            });
+                });
+            }
+        }
 
         executor.run()?;
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+* Fixed progress bar dialog stuck open behind other dialogs.
+* Added support for the installer to automatically uninstall existing installation.
+
 ## 0.2.1 (2024-10-06)
 
 * Fixed missing localization string.
