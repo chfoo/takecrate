@@ -3,7 +3,7 @@ use std::sync::mpsc::Receiver;
 use cursive::{
     align::HAlign,
     view::Nameable,
-    views::{Dialog, DialogFocus, LinearLayout, ProgressBar, TextView},
+    views::{Dialog, DialogFocus, LinearLayout, NamedView, ProgressBar, TextView},
     Cursive,
 };
 
@@ -79,13 +79,16 @@ const PROGRESS_DIALOG_TEXT: &str = "progress_dialog_text";
 const PROGRESS_DIALOG_SUBTEXT: &str = "progress_dialog_subtext";
 const PROGRESS_DIALOG_PROGRESS_BAR: &str = "progress_dialog_progress_bar";
 
-pub fn progress_dialog(title: &str) -> Dialog {
+pub fn progress_dialog(title: &str) -> NamedView<Dialog> {
     let layout = LinearLayout::vertical()
         .child(TextView::empty().with_name(PROGRESS_DIALOG_TEXT))
         .child(TextView::empty().with_name(PROGRESS_DIALOG_SUBTEXT))
         .child(ProgressBar::new().with_name(PROGRESS_DIALOG_PROGRESS_BAR));
 
-    Dialog::new().title(title).content(layout)
+    Dialog::new()
+        .title(title)
+        .content(layout)
+        .with_name(PROGRESS_DIALOG)
 }
 
 pub fn set_progress_dialog_text(cursive: &mut Cursive, value: &str) {
