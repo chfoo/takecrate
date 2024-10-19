@@ -3,7 +3,7 @@ members = ["xtask"]
 
 [package]
 name = "takecrate"
-version = "0.2.1"
+version = "1.0.0"
 edition = "2021"
 license = "MPL-2.0"
 description = "Adds installer functionality to standalone binaries for distribution of CLI applications"
@@ -11,7 +11,12 @@ categories = ["command-line-interface"]
 keywords = ["installer", "cli"]
 repository = "https://github.com/chfoo/takecrate"
 rust-version = "1.80"
-exclude = [".cargo/config.toml"]
+exclude = [
+    ".cargo/config.toml",
+    ".github/ISSUE_TEMPLATE",
+    ".github/pull_request_template.md",
+    ".github/workflows",
+]
 
 [features]
 default = ["ui", "i18n"]

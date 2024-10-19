@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.0 (2024-10-19)
 
 * Fixed progress bar dialog stuck open behind other dialogs.
 * Added support for the installer to automatically uninstall existing installation.
