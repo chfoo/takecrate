@@ -41,14 +41,14 @@ use inst::{InstallConfig, Installer, PackageManifest};
 use manifest::{AppId, DiskManifest};
 use uninst::Uninstaller;
 
-#[cfg(
-    all(feature = "ui", not(feature = "i18n"))
-)]
+#[cfg(all(feature = "ui", not(feature = "i18n")))]
 compile_error!("feature 'ui' depends on feature 'i18n'");
 
 pub mod lib_doc;
 
 pub mod error;
+#[cfg(feature = "i18n")]
+pub mod i18n;
 pub mod inst;
 #[cfg(feature = "i18n")]
 mod locale;

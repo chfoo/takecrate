@@ -56,7 +56,7 @@
 //! The crate is internationalized using [Fluent](https://projectfluent.org/)
 //! and will automatically pick a language for the current locale.
 //! Translation files are embedded into the binary.
-//! This currently can't be customized.
+//! Use feature `i18n-static` and `i18n-custom` to customize this behavior.
 //!
 //! The translation files are located in the `locales` directory of
 //! this crate's source code. If you want to contribute a localization,

@@ -1,8 +1,13 @@
-use std::{collections::HashMap, str::FromStr, sync::LazyLock};
+use std::{
+    collections::HashMap,
+    str::FromStr,
+    sync::{Arc, LazyLock, Mutex},
+};
 
 use fluent_bundle::FluentValue;
-use fluent_templates::{LanguageIdentifier, Loader};
+use fluent_templates::{ArcLoader, LanguageIdentifier, Loader};
 
+#[cfg(feature = "i18n-static")]
 fluent_templates::static_loader! {
     static LOCALES = {
         locales: "locales",
@@ -10,6 +15,8 @@ fluent_templates::static_loader! {
         core_locales: "locales/core.ftl",
     };
 }
+
+static CUSTOM_LOADER: Mutex<Option<Arc<ArcLoader>>> = Mutex::new(None);
 
 fn current_lang_id() -> &'static LanguageIdentifier {
     static LANG_ID: LazyLock<LanguageIdentifier> = LazyLock::new(|| {
@@ -28,13 +35,23 @@ pub fn current_lang_tag() -> String {
     current_lang_id().to_string()
 }
 
+#[cfg(feature = "i18n-custom")]
+pub fn set_custom_loader(loader: ArcLoader) {
+    let mut guard = CUSTOM_LOADER.lock().unwrap();
+    guard.replace(Arc::new(loader));
+}
+
 pub struct Locale {
     lang_id: LanguageIdentifier,
+    custom_loader: Option<Arc<ArcLoader>>,
 }
 
 impl Locale {
     fn new(id: LanguageIdentifier) -> Self {
-        Self { lang_id: id }
+        Self {
+            lang_id: id,
+            custom_loader: CUSTOM_LOADER.lock().unwrap().clone(),
+        }
     }
 
     pub fn with_system() -> Self {
@@ -57,7 +74,18 @@ impl Locale {
     }
 
     pub fn text(&self, text_id: &str) -> String {
-        LOCALES.lookup(&self.lang_id, text_id)
+        if let Some(loader) = &self.custom_loader {
+            loader.lookup(&self.lang_id, text_id)
+        } else {
+            #[cfg(feature = "i18n-static")]
+            {
+                LOCALES.lookup(&self.lang_id, text_id)
+            }
+            #[cfg(not(feature = "i18n-static"))]
+            {
+                text_id.to_string()
+            }
+        }
     }
 
     pub fn text_args<'a, A>(&self, text_id: &str, args: A) -> String
@@ -65,6 +93,18 @@ impl Locale {
         A: Into<HashMap<&'a str, FluentValue<'a>>>,
     {
         let args: HashMap<&str, FluentValue<'_>> = args.into();
-        LOCALES.lookup_with_args(&self.lang_id, text_id, &args)
+
+        if let Some(loader) = &self.custom_loader {
+            loader.lookup_with_args(&self.lang_id, text_id, &args)
+        } else {
+            #[cfg(feature = "i18n-static")]
+            {
+                LOCALES.lookup_with_args(&self.lang_id, text_id, &args)
+            }
+            #[cfg(not(feature = "i18n-static"))]
+            {
+                text_id.to_string()
+            }
+        }
     }
 }

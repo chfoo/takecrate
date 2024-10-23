@@ -3,7 +3,7 @@ members = ["xtask"]
 
 [package]
 name = "takecrate"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 license = "MPL-2.0"
 description = "Adds installer functionality to standalone binaries for distribution of CLI applications"
@@ -19,12 +19,16 @@ exclude = [
 ]
 
 [features]
-default = ["ui", "i18n"]
+default = ["ui", "i18n", "i18n-static"]
 
 ## Enables the terminal user interface
 ui = ["dep:cursive"]
 ## Enables internationalization and localization (globalization) support
 i18n = ["dep:fluent-bundle", "dep:fluent-templates", "dep:sys-locale"]
+## Enables builtin language translation files.
+i18n-static = ["i18n"]
+## Enables support for custom language translations.
+i18n-custom = ["i18n"]
 ## Enables Cursive themes API which exposes "unstable" dependency types.
 ui-theme = []
 

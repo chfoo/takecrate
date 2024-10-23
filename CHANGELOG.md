@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Added features to support to load custom language translations and disabling the embedded translations.
+
 ## 1.0.0 (2024-10-19)
 
 * Fixed progress bar dialog stuck open behind other dialogs.
