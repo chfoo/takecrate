@@ -83,7 +83,7 @@ fn add_path_env_var_user(exe_dir: &OsStr, profile_path: &Path) -> Result<(), OsE
 
     if profile_path.exists() {
         tracing::debug!(?profile_path, "reading profile");
-        let contents = std::fs::read_to_string(&profile_path)?;
+        let contents = std::fs::read_to_string(profile_path)?;
 
         if contents.contains(&exe_dir_shell_path) {
             return Ok(());
@@ -96,7 +96,7 @@ fn add_path_env_var_user(exe_dir: &OsStr, profile_path: &Path) -> Result<(), OsE
     let mut file = File::options()
         .create(true)
         .append(true)
-        .open(&profile_path)?;
+        .open(profile_path)?;
     file.write_all(snippet.as_bytes())?;
     file.flush()?;
 
@@ -116,7 +116,7 @@ fn remove_path_env_var_user(exe_dir: &OsStr, profile_path: &Path) -> Result<(), 
     let snippet = PROFILE_SHELL_TEMPLATE_SNIPPET.replace("{path}", &exe_dir_shell_path);
 
     tracing::debug!(?profile_path, "reading profile");
-    let contents = std::fs::read_to_string(&profile_path)?;
+    let contents = std::fs::read_to_string(profile_path)?;
 
     if !contents.contains(&snippet) {
         return Ok(());
@@ -176,7 +176,7 @@ fn verify_safe_for_shell_script(path_str: &str) -> Result<(), OsError> {
 }
 
 fn path_to_shell_script_path(path: &Path, home: &Path) -> String {
-    if let Ok(path) = path.strip_prefix(&home) {
+    if let Ok(path) = path.strip_prefix(home) {
         let path = path.to_string_lossy();
         format!("$HOME/{}", path)
     } else {
