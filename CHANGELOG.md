@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 (2024-11-06)
 
-* Added features to support to load custom language translations and disabling the embedded translations.
+* Added features to support loading custom language translations and disabling the embedded translations.
 
 ## 1.0.0 (2024-10-19)
 

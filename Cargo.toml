@@ -6,6 +6,7 @@ name = "takecrate"
 version = "1.1.0"
 edition = "2021"
 license = "MPL-2.0"
+authors = ["Christopher Foo", "Takecrate contributors"]
 description = "Adds installer functionality to standalone binaries for distribution of CLI applications"
 categories = ["command-line-interface"]
 keywords = ["installer", "cli"]
@@ -42,7 +43,7 @@ self-replace = "1.5.0"
 serde = { version = "1.0.210", features = ["derive"] }
 sys-locale = { version = "0.3.1", optional = true }
 tempfile = "3.13.0"
-thiserror = "1.0.64"
+thiserror = "2.0.0"
 tracing = "0.1.40"
 uuid = { version = "1.10.0", features = ["serde", "v5"] }
 
