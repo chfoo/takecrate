@@ -82,13 +82,18 @@ fn is_installer() -> bool {
         return false;
     }
 
-    if let Some(name) = std::env::current_exe().unwrap_or_default().file_stem() {
-        let name = name.to_string_lossy();
-        let pattern = Regex::new(r"(?i:[ _-]installer)$").unwrap();
-        pattern.is_match(&name)
+    // Remove file extension, if any, and check if it ends with the
+    // installer prefix (separated by dot, space, underscore, or hyphen).
+    let name = std::env::current_exe().unwrap_or_default();
+    let name = if !std::env::consts::EXE_SUFFIX.is_empty() {
+        name.file_stem().unwrap_or(name.as_os_str())
     } else {
-        false
-    }
+        name.as_os_str()
+    };
+    let name = name.to_string_lossy();
+
+    let pattern = Regex::new(r"(?i:[. _-]installer)$").unwrap();
+    pattern.is_match(&name)
 }
 
 /// Initialize logging for debugging
