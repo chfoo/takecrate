@@ -36,4 +36,4 @@ In addition, notable quality of life features include:
 
 ## License
 
-Copyright 2024 Christopher Foo. Licensed under Mozilla Public License 2.0
+Copyright 2024-2025 Christopher Foo and Takecrate contributors. Licensed under Mozilla Public License 2.0
