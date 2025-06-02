@@ -20,7 +20,7 @@ access-scope-prompt = Install the application to this user account or for all us
 for-this-user = 👤 For this user only
 for-all-users = 👥 For all users
 
-modify-search-path-prompt = Modify the search path ("PATH") so the command is accessible everywhere?
+modify-search-path-prompt = Modify the search path ("PATH") to make the command accessible everywhere?
 modify-search-path = Yes, if needed
 do-not-modify-search-path = No, do not change it
 
