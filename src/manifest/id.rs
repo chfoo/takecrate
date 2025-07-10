@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-/// Reexport from [`uuid`] crate:
+pub use uuid;
+
+// Oops: The crate should have been reexported, not just the struct.
+#[doc(hidden)]
 pub use uuid::Uuid;
 
 /// Represents a unique ID for an application.
@@ -50,7 +53,7 @@ impl AppId {
         let uuid = app_id_to_uuid(namespaced_id);
 
         Ok(Self {
-            plain_id: namespaced_id.split('.').last().unwrap().to_string(),
+            plain_id: namespaced_id.split('.').next_back().unwrap().to_string(),
             namespaced_id: namespaced_id.to_string(),
             uuid,
         })

@@ -1,3 +1,4 @@
+//! Test installing in a temporary directory.
 use takecrate::{
     error::InstallerErrorKind,
     inst::{InstallConfig, PackageManifest},

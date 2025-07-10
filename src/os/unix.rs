@@ -131,7 +131,7 @@ fn remove_path_env_var_user(exe_dir: &OsStr, profile_path: &Path) -> Result<(), 
 }
 
 pub fn get_home() -> Result<PathBuf, OsError> {
-    let home = std::env::var_os("HOME").ok_or_else(|| OsError::Other("missing HOME"))?;
+    let home = std::env::var_os("HOME").ok_or(OsError::Other("missing HOME"))?;
     Ok(PathBuf::from(home))
 }
 
@@ -178,7 +178,7 @@ fn verify_safe_for_shell_script(path_str: &str) -> Result<(), OsError> {
 fn path_to_shell_script_path(path: &Path, home: &Path) -> String {
     if let Ok(path) = path.strip_prefix(home) {
         let path = path.to_string_lossy();
-        format!("$HOME/{}", path)
+        format!("$HOME/{path}")
     } else {
         path.to_string_lossy().to_string()
     }

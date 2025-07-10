@@ -114,8 +114,8 @@ impl DiskManifest {
     /// Deserialize from the given path.
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, InstallerError> {
         let path = path.as_ref();
-        let buf = std::fs::read(path)
-            .with_contextc(|_error| format!("could not open file {:?}", path))?;
+        let buf =
+            std::fs::read(path).with_contextc(|_error| format!("could not open file {path:?}"))?;
         let mut manifest = Self::from_reader(Cursor::new(buf))?;
 
         manifest.manifest_path = path.to_path_buf();

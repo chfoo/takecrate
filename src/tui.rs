@@ -1,9 +1,12 @@
+//! Terminal user interface.
+
 use std::{
     fmt::Debug,
     sync::{mpsc::Receiver, Arc},
     thread::JoinHandle,
 };
 
+pub use cursive;
 use cursive::{
     theme::Theme,
     view::Scrollable,
@@ -24,7 +27,7 @@ use crate::{
 mod bg;
 mod dialog;
 
-pub struct Tui {
+pub(crate) struct Tui {
     channel: Option<CbSink>,
     handle: Option<JoinHandle<std::io::Result<()>>>,
     app_name: String,

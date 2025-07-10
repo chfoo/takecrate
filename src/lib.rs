@@ -56,7 +56,7 @@ pub mod manifest;
 pub mod os;
 pub mod path;
 #[cfg(feature = "ui")]
-mod tui;
+pub mod tui;
 pub mod uninst;
 
 /// Starts the installer with a interactive interface.

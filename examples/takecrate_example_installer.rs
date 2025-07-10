@@ -43,7 +43,7 @@ fn main2() -> anyhow::Result<()> {
 
             let manifest = takecrate::manifest(&manifest.app_id)?;
             let content = std::fs::read_to_string(manifest.app_paths.data.join("test.txt"))?;
-            println!("test.txt: {}", content);
+            println!("test.txt: {content}");
         }
         Command::Self_(self_args) => match self_args.command {
             SelfCommand::Install { quiet } => {
