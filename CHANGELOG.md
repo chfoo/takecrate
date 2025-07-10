@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1 (2025-07-10)
+
+* Fixed: Documentation improvements.
+* Fixed: Grammar on a message.
+* Changed: Updated dependencies.
+
 ## 1.1.0 (2024-11-06)
 
 * Added features to support loading custom language translations and disabling the embedded translations.
