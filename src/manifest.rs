@@ -1,7 +1,7 @@
 //! Describing the contents an installed package.
 //!
 //! In order to ensure user and system files are not overwritten or removed
-//! inadvertently, the crate makes use of file lists.
+//! inadvertently, the crate makes use of file lists stored on disk.
 //!
 //! ## Default file locations
 //!

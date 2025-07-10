@@ -5,7 +5,7 @@
 //! * unix
 //! * windows
 //!
-//! ## Features
+//! ## Included features
 //!
 //! * Additional files (see later section).
 //! * Installation for the current user or for all users.
@@ -61,3 +61,12 @@
 //! The translation files are located in the `locales` directory of
 //! this crate's source code. If you want to contribute a localization,
 //! please see the contributing note in the source repository.
+//!
+//! ## Cargo feature list
+//!
+//! * `default`: `ui`, `i18n`, `i18n-static`
+//! * `ui`: Enables the terminal user interface (TUI).
+//! * `i18n`: Enables internationalization and localization (globalization) support.
+//! * `i18n-static`: Enables builtin language translation files.
+//! * `i18n-custom`: Enables support for custom language translations.
+//! * `ui-theme`: Enables Cursive themes API which exposes "unstable" dependency types.

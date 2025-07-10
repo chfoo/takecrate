@@ -46,12 +46,8 @@ pub enum AppPathPrefix {
     User,
     /// In the system directories accessible for all users.
     System,
-    /// Reserved.
-    ///
     /// In a single directory.
     SingleDir(PathBuf),
-    /// Reserved.
-    ///
     /// With a custom prefix instead of `/usr/local`.
     CustomUnix(PathBuf),
 }

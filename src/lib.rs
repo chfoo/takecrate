@@ -9,7 +9,7 @@
 //!
 //! 1. Create a unique ID for your application using [`AppId`].
 //! 2. Create the listing of input files using [`PackageManifest`].
-//! 3. Based on context, run [`install_interactive()`] or [`uninstall_interactive`], or continue normally in your binary.
+//! 3. Based on context, run [`install_interactive()`] or [`uninstall_interactive()`], or continue normally in your binary.
 //! 4. If you need a included data file in a installation, use [`manifest()`] to get a [`DiskManifest`].
 //!
 //! ## Example

@@ -21,17 +21,20 @@ pub enum FileType {
     /// A program file that can be run by the user.
     Executable,
 
-    /// Reserved.
+    #[doc(hidden)]
+    /// Reserved for future use.
     ///
     /// Additional executable code used by a program.
     Library,
 
-    /// Reserved.
+    #[doc(hidden)]
+    /// Reserved for future use.
     ///
     /// User editable configuration file.
     Configuration,
 
-    /// Reserved.
+    #[doc(hidden)]
+    /// Reserved for future use.
     ///
     /// Documentation for the user.
     Documentation,
@@ -171,13 +174,16 @@ pub struct DiskPaths {
     /// Directory where the application's [`FileType::Executable`] files are installed.
     pub executable: PathBuf,
 
-    /// Reserved
+    #[doc(hidden)]
+    /// Reserved for future use.
     pub library: PathBuf,
 
-    /// Reserved
+    #[doc(hidden)]
+    /// Reserved for future use.
     pub configuration: PathBuf,
 
-    /// Reserved
+    #[doc(hidden)]
+    /// Reserved for future use.
     pub documentation: PathBuf,
 
     /// Directory where the application's [`FileType::Data`] files are installed.

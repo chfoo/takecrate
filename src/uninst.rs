@@ -23,8 +23,6 @@ impl Uninstaller {
     /// Creates a new uninstaller.
     ///
     /// `app_id` is the application ID of the current binary.
-    ///
-    /// `manifest` is the disk manifest found on the machine.
     pub fn new(app_id: &AppId) -> Self {
         Self {
             app_id: app_id.clone(),
