@@ -147,7 +147,9 @@ impl DiskManifest {
 
     /// Serialize to the given writer.
     pub fn to_writer<W: Write>(&self, output: W) -> Result<(), InstallerError> {
-        ron::ser::to_writer_pretty(output, &self, PrettyConfig::default())
+        let options = ron::Options::default();
+        options
+            .to_io_writer_pretty(output, &self, PrettyConfig::default())
             .map_err(|error| InstallerError::new(InstallerErrorKind::Other).with_source(error))?;
 
         Ok(())

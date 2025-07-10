@@ -1,11 +1,11 @@
 use std::{
+    borrow::Cow,
     collections::HashMap,
     str::FromStr,
     sync::{Arc, LazyLock, Mutex},
 };
 
-use fluent_bundle::FluentValue;
-use fluent_templates::{ArcLoader, LanguageIdentifier, Loader};
+use fluent_templates::{fluent_bundle::FluentValue, ArcLoader, LanguageIdentifier, Loader};
 
 #[cfg(feature = "i18n-static")]
 fluent_templates::static_loader! {
@@ -90,9 +90,11 @@ impl Locale {
 
     pub fn text_args<'a, A>(&self, text_id: &str, args: A) -> String
     where
-        A: Into<HashMap<&'a str, FluentValue<'a>>>,
+        A: IntoIterator<Item = (&'static str, FluentValue<'a>)>,
     {
-        let args: HashMap<&str, FluentValue<'_>> = args.into();
+        let args = args.into_iter().map(|(k, v)| (Cow::Borrowed(k), v));
+
+        let args: HashMap<Cow<'static, str>, FluentValue<'_>> = HashMap::from_iter(args);
 
         if let Some(loader) = &self.custom_loader {
             loader.lookup_with_args(&self.lang_id, text_id, &args)

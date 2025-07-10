@@ -37,8 +37,8 @@ ui-theme = []
 crc32c = "0.6.8"
 cursive = { version = "0.21.1", optional = true }
 fluent-bundle = { version = "0.15.3", optional = true }
-fluent-templates = { version = "0.11.0", optional = true }
-ron = "0.8.1"
+fluent-templates = { version = "0.13.0", optional = true }
+ron = "0.10.1"
 self-replace = "1.5.0"
 serde = { version = "1.0.210", features = ["derive"] }
 sys-locale = { version = "0.3.1", optional = true }
@@ -48,8 +48,8 @@ tracing = "0.1.40"
 uuid = { version = "1.10.0", features = ["serde", "v5"] }
 
 [target.'cfg(windows)'.dependencies]
-windows-registry = "0.3.0"
-windows-result = "0.2.0"
+windows-registry = "0.5.3"
+windows-result = "0.3.4"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.159"
